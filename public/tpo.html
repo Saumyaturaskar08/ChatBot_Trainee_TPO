@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>1Trainee - TPO Officer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --brand: #4f46e5;
+            --brand-2: #3b82f6;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --surface: #ffffff;
+            --bg: #f1f5f9;
+        }
+
+        * { -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            background:
+                radial-gradient(900px 400px at 100% -10%, rgba(79, 70, 229, .12), transparent 60%),
+                radial-gradient(700px 400px at -10% 10%, rgba(59, 130, 246, .10), transparent 60%),
+                var(--bg);
+        }
+
+        /* ---------- Navbar ---------- */
+        .top-nav {
+            background: linear-gradient(120deg, #4338ca, var(--brand) 55%, var(--brand-2));
+            position: sticky; top: 0; z-index: 1000;
+            padding-top: env(safe-area-inset-top, 0px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, .25);
+        }
+        .top-nav .navbar-brand { font-size: 1.05rem; letter-spacing: .2px; }
+        .brand-icon {
+            display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
+            background: rgba(255, 255, 255, .18); margin-right: 10px; font-size: 1.1rem;
+        }
+
+        /* Connection badge (JS swaps bg-warning / bg-success / bg-danger on it) */
+        #connStatus {
+            display: inline-flex; align-items: center; gap: 8px;
+            border-radius: 999px; padding: 7px 14px; font-weight: 600; font-size: .8rem;
+            transition: background-color .3s ease;
+        }
+        #connStatus::before {
+            content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0;
+        }
+        #connStatus.bg-success::before { animation: live 1.8s ease-out infinite; }
+        @keyframes live {
+            0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, .8); }
+            100% { box-shadow: 0 0 0 9px rgba(255, 255, 255, 0); }
+        }
+
+        /* ---------- Entrance ---------- */
+        .reveal { opacity: 0; transform: translateY(14px); animation: rise .6s cubic-bezier(.2, .8, .2, 1) forwards; animation-delay: var(--d, 0s); }
+        @keyframes rise { to { opacity: 1; transform: none; } }
+
+        /* ---------- Main card ---------- */
+        .chat-card {
+            background: var(--surface); border: 1px solid var(--line); border-radius: 24px; overflow: hidden;
+            box-shadow: 0 18px 44px rgba(15, 23, 42, .10);
+        }
+        .chat-card-head {
+            padding: 16px 20px; display: flex; align-items: center; gap: 14px;
+            border-bottom: 1px solid var(--line); background: #fff;
+        }
+        .head-icon {
+            width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0;
+            background: #eef2ff; color: var(--brand); font-size: 1.3rem;
+        }
+        .chat-card-head h5 { font-weight: 800; color: var(--ink); }
+        .chat-card-head small { color: var(--muted); }
+
+        /* ---------- Message log ---------- */
+        .chat-box {
+            height: clamp(340px, 58dvh, 560px); overflow-y: auto; scroll-behavior: smooth;
+            padding: 18px; overscroll-behavior: contain;
+            background:
+                radial-gradient(circle at 1px 1px, rgba(79, 70, 229, .06) 1px, transparent 0) 0 0 / 18px 18px,
+                #f8fafc;
+            border: 0; border-radius: 0;
+        }
+        .chat-box::-webkit-scrollbar { width: 6px; }
+        .chat-box::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
+
+        .empty-state i { display: block; font-size: 2.2rem; margin-bottom: 8px; color: #a5b4fc; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 50% { transform: translateY(-6px); } }
+
+        .message {
+            margin-bottom: 10px; padding: 9px 13px 6px; max-width: 78%; font-size: .93rem; line-height: 1.4;
+            word-break: break-word;
+            animation: msg-in .3s cubic-bezier(.2, .9, .3, 1.2);
+        }
+        @keyframes msg-in { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+        .message.trainee {
+            background: #ffffff; color: #1e293b; align-self: flex-start;
+            border: 1px solid var(--line); border-radius: 16px 16px 16px 4px;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, .05); transform-origin: left bottom;
+        }
+        .message.tpo {
+            background: linear-gradient(135deg, var(--brand), #6366f1); color: #fff;
+            align-self: flex-end; margin-left: auto; border-radius: 16px 16px 4px 16px;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, .28); transform-origin: right bottom;
+        }
+        .msg-time { display: block; text-align: right; font-size: .66rem; margin-top: 2px; opacity: .65; }
+
+        /* ---------- Reply form ---------- */
+        .reply-bar { padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); background: #fff; border-top: 1px solid var(--line); }
+        .reply-form { display: flex; align-items: center; gap: 10px; }
+        .reply-form .form-control {
+            border-radius: 999px; border: 1px solid var(--line); background: #f8fafc; padding: 11px 18px; font-size: .95rem;
+            transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .reply-form .form-control:focus { background: #fff; border-color: #818cf8; box-shadow: 0 0 0 4px rgba(99, 102, 241, .15); }
+        .send-btn {
+            border: 0; border-radius: 999px; padding: 11px 22px; flex-shrink: 0; color: #fff; font-weight: 700; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-2));
+            box-shadow: 0 6px 14px rgba(79, 70, 229, .35);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .send-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(79, 70, 229, .45); }
+        .send-btn:hover i { animation: nudge .5s ease; }
+        .send-btn:active { transform: scale(.95); }
+        .send-btn:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }
+        @keyframes nudge { 40% { transform: translate(4px, -4px) rotate(-10deg); } }
+
+        /* ---------- Responsive ---------- */
+        @media (min-width: 576px) and (max-width: 991.98px) {
+            .chat-box { height: clamp(380px, 62dvh, 600px); }
+        }
+        @media (max-width: 575.98px) {
+            .top-nav .navbar-brand { font-size: .92rem; }
+            .top-nav .brand-text-long { display: none; }
+            #connStatus { padding: 6px 11px; font-size: .74rem; }
+            .main-wrap { padding-left: 0; padding-right: 0; margin-top: 0 !important; }
+            .chat-card { border-radius: 0 0 22px 22px; border-left: 0; border-right: 0; }
+            .chat-box { height: calc(100dvh - 235px); min-height: 300px; padding: 14px; }
+            .message { max-width: 86%; }
+            .reply-form .form-control { font-size: 16px; } /* stops iOS zoom on focus */
+            .send-btn { width: 46px; height: 46px; padding: 0; justify-content: center; }
+            .send-btn .send-label { display: none; }
+        }
+
+        /* ---------- Reduced motion ---------- */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+            .reveal { opacity: 1; transform: none; }
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark top-nav">
+        <div class="container-fluid px-3 px-md-4">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+                <span class="brand-icon"><i class="bi bi-shield-lock-fill"></i></span>
+                1Trainee Portal <span class="brand-text-long ms-1 fw-normal" style="opacity:.8;">(TPO Officer Dashboard)</span>
+            </a>
+            <span id="connStatus" class="badge bg-warning text-dark">Connecting...</span>
+        </div>
+    </nav>
+
+    <div class="container my-4 my-md-5 main-wrap" style="max-width: 820px;">
+        <div class="chat-card reveal">
+            <div class="chat-card-head">
+                <div class="head-icon"><i class="bi bi-chat-dots"></i></div>
+                <div class="lh-sm">
+                    <h5 class="mb-1">Live Trainee Queries</h5>
+                    <small>Replies reach the trainee instantly</small>
+                </div>
+            </div>
+
+            <!-- Messages Log Box -->
+            <div class="chat-box d-flex flex-column" id="tpoChatMessages">
+                <div class="text-muted text-center small my-auto empty-state"><i class="bi bi-inbox"></i>Waiting for trainee messages...</div>
+            </div>
+
+            <!-- Reply Form -->
+            <div class="reply-bar">
+                <form onsubmit="sendTPOReply(event)" class="reply-form">
+                    <input type="text" id="tpoInput" class="form-control" placeholder="Type reply as TPO..." required autocomplete="off">
+                    <button class="send-btn" type="submit" aria-label="Send reply"><i class="bi bi-send-fill"></i><span class="send-label">Send Reply</span></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        const chatMessages = document.getElementById('tpoChatMessages');
+        const tpoInput = document.getElementById('tpoInput');
+        const connStatus = document.getElementById('connStatus');
+
+        function initTPOWebSocket() {
+            ws = new WebSocket('ws://localhost:8080');
+
+            ws.onopen = () => {
+                connStatus.textContent = 'Online (Connected)';
+                connStatus.className = 'badge bg-success';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                // Clear placeholder if first message
+                if (chatMessages.querySelector('.text-muted')) {
+                    chatMessages.innerHTML = '';
+                }
+
+                const div = document.createElement('div');
+                div.classList.add('message');
+
+                const body = document.createElement('span');
+                if (data.sender === 'Trainee') {
+                    div.classList.add('trainee');
+                    body.textContent = `Trainee: ${data.text}`;
+                } else {
+                    div.classList.add('tpo');
+                    body.textContent = `You (TPO): ${data.text}`;
+                }
+
+                const time = document.createElement('span');
+                time.className = 'msg-time';
+                time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                div.appendChild(body);
+                div.appendChild(time);
+                chatMessages.appendChild(div);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            };
+
+            ws.onclose = () => {
+                connStatus.textContent = 'Disconnected';
+                connStatus.className = 'badge bg-danger';
+                setTimeout(initTPOWebSocket, 3000);
+            };
+        }
+
+        function sendTPOReply(event) {
+            event.preventDefault();
+            const text = tpoInput.value.trim();
+            if (!text) return;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const payload = { sender: 'TPO', text: text };
+                ws.send(JSON.stringify(payload));
+                tpoInput.value = '';
+            }
+        }
+
+        // Initialize connection on load
+        initTPOWebSocket();
+    </script>
+</body>
+</html>

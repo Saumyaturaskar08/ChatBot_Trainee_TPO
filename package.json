@@ -1,0 +1,12 @@
+{
+  "name": "1trainee-chat-server",
+  "version": "1.0.0",
+  "description": "Simple WebSocket server for 1Trainee TPO Chat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
